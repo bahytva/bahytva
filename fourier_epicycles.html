@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fourier Epicycles Visualization</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        canvas { border: 1px solid black; display: block; margin: auto; }
+    </style>
+</head>
+<body>
+    <h1>Fourier Epicycles Visualization</h1>
+    <canvas id="canvas" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const width = canvas.width;
+        const height = canvas.height;
+
+        const frequencies = [1, 2, 3]; // Frequency coefficients
+        const amplitudes = [100, 50, 30]; // Amplitude coefficients
+        const phaseShifts = [0, Math.PI / 2, Math.PI / 4]; // Phase shifts
+
+        let time = 0;
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.translate(width / 2, height / 2);
+
+            let x = 0;
+            let y = 0;
+            let totalFrequency = 0;
+
+            for (let i = 0; i < frequencies.length; i++) {
+                const frequency = frequencies[i];
+                const amplitude = amplitudes[i];
+                const phase = phaseShifts[i];
+
+                const currentX = amplitude * Math.cos(frequency * time + phase);
+                const currentY = amplitude * Math.sin(frequency * time + phase);
+
+                // Draw the rotating vector
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(currentX + x, currentY + y);
+                ctx.stroke();
+                x += currentX;
+                y += currentY;
+
+                // Draw circular paths
+                ctx.beginPath();
+                ctx.arc(x, y, amplitude, 0, Math.PI * 2);
+                ctx.stroke();
+
+                totalFrequency += frequency;
+            }
+
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.setTransform(1, 0, 0, 1, width / 2, height / 2);
+            ctx.rotate(totalFrequency * time);
+
+            time += 0.01;
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
