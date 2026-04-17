@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fourier Epicycles Visualization</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fourier Epicycles Visualization</h1>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <button id="fullscreen">Fullscreen</button>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let data = [];
+        let angle = 0;
+        let scale = 2;
+        let isFullscreen = false;
+        let offset = { x: canvas.width / 2, y: canvas.height / 2 };
+
+        function loadCSV(url) {
+            fetch(url)
+                .then(response => response.text())
+                .then(csv => {
+                    const rows = csv.split('\n');
+                    rows.forEach(row => {
+                        const [frequency, amplitude, phase] = row.split(',').map(Number);
+                        data.push({ frequency, amplitude, phase });
+                    });
+                });
+        }
+
+        function drawVectors() {
+            const [first, ...rest] = data;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(offset.x, offset.y);
+            let x = 0;
+            let y = 0;
+
+            ctx.strokeStyle = 'blue';
+            rest.forEach(epicycle => {
+                const { frequency, amplitude, phase } = epicycle;
+                const vectorX = amplitude * Math.cos(frequency * angle + phase);
+                const vectorY = amplitude * Math.sin(frequency * angle + phase);
+                ctx.strokeStyle = 'blue';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                x += vectorX;
+                y += vectorY;
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            });
+
+            ctx.restore();
+            drawTrajectory(x, y);
+            angle += 0.01;
+        }
+
+        function drawTrajectory(x, y) {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(x + offset.x, y + offset.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            drawVectors();
+        }
+
+        document.getElementById('fullscreen').addEventListener('click', () => {
+            if (!isFullscreen) {
+                canvas.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+            isFullscreen = !isFullscreen;
+        });
+
+        document.addEventListener('wheel', event => {
+            scale += event.deltaY * -0.001;
+            scale = Math.min(Math.max(0.1, scale), 10);
+            ctx.scale(scale, scale);
+        });
+
+        loadCSV('data.csv');
+        animate();
+    </script>
+</body>
+</html>
